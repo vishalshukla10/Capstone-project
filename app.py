@@ -6,6 +6,8 @@ from wtforms import Form, BooleanField, StringField, PasswordField, validators
 import bcrypt
 from flask import *
 from flask import session
+import main
+import trainer as tr
 
 app = Flask(__name__, template_folder='template')
 # K.clear_session()
@@ -15,7 +17,7 @@ app.config['MONGO_URI'] = 'mongodb://localhost:27017/user'
 
 mongo = PyMongo(app)
 
-@app.route('/')
+@app.route('/' , methods=['POST', 'GET'])
 def index():
     return render_template('index.html')
 
@@ -70,6 +72,34 @@ def register():
 @app.route('/after_login',methods=['POST','GET'])
 def after_log():
     return render_template('after_login.html')
+
+@app.route('/result', methods=['POST', 'GET'])
+def result():
+    if request.method == 'POST':
+        url = request.form['formu']
+        print(url)
+        main.process_test_url(url, 'test_features.csv')
+        return_ans = tr.gui_caller('url_features.csv', 'test_features.csv')
+        a = str(return_ans).split()
+        print(a)
+        if int(a[1]) == 0:
+            comment1='URL Checker Result' 
+            comment2='The URL'+'  '+ url + ' is Safe'
+            comment1=str(comment1).lstrip('(').rstrip(')')
+            comment2=str(comment2).lstrip('(').rstrip(')')
+            print(comment1)
+            print(comment2)
+        elif int(a[1]) == 1:
+            comment1='URL Checker Result'
+            comment2='The URL'+'  '+ url + ' is Malicious'
+            comment1=str(comment1).lstrip('(').rstrip(')')
+            comment2=str(comment2).lstrip('(').rstrip(')')
+        else:
+            comment1='URL Checker Result'
+            comment2='The URL'+'  '+ url + ' may be Malicious'
+            comment1=str(comment1).lstrip('(').rstrip(')')
+            comment2=str(comment2).lstrip('(').rstrip(')')
+        return render_template("result.html",comment1=comment1,comment2=comment2)
 
 if __name__ == '__main__':
     app.secret_key = 'mysecret'
